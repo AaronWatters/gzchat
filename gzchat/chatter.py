@@ -140,13 +140,11 @@ def main(argv=None):
     myLLMs = LLMs.copy()
     LLMname = None
     args = parser.parse_args(argv)
-    print("argv", argv)
-    print("args", args)
     # if model and url are provided, add them to the LLMs dict with the model name as the key
     if args.model and args.url:
         myLLMs[args.model] = dict(model=args.model, url=args.url)
         LLMname = args.model
-        print(f"Added custom LLM: {args.model} with URL {args.url}")
+        #p(f"Added custom LLM: {args.model} with URL {args.url}")
     discussion = LLMDiscussion(LLMs=myLLMs, LLMname=LLMname)
     gz.serve(discussion.run())
 
@@ -167,9 +165,9 @@ class LLMDiscussion:
         
     def on_model_change(self, choice):
         self.selectedLLM = choice
-        print(f"Selected LLM: {self.selectedLLM}")
+        #p(f"Selected LLM: {self.selectedLLM}")
         if self.selectedLLM not in self.LLMs:
-            print("Please select a valid model.")
+            self.info.html("Please select a valid model.")
             return
         params = self.LLMs[self.selectedLLM]
         self.chat(params)
@@ -235,7 +233,7 @@ class LLMDiscussion:
         summary_prompt = "Summarize this discussion so far."
         await self.ask_llm(summary_prompt)
         summary = self.messages[-1]["content"]
-        print("summary", summary)
+        #("summary", summary)
         self.messages = init_messages() + [{"role": "system", "content": "The following is a summary of the discussion so far: %s" % summary}]
         self.interactions.append(gz.Html("<hr><h2>Context Summarized</h2>"))
         self.dialog.attach_children(self.interactions)
@@ -243,7 +241,7 @@ class LLMDiscussion:
 
     def on_ask(self, *ignored):
         user_input = self.text_area.value.strip()
-        print("user input", repr(user_input))
+        #p("user input", repr(user_input))
         self.enable_buttons(False)
         self.button.text("Asking...")
         self.info.html("Asking %s... %s" % (repr(self.selectedLLM), std_textbox_tag(user_input, rows=3, readonly=True)))
@@ -257,7 +255,7 @@ class LLMDiscussion:
             query = LLMQuery(self.messages, params["model"], params["url"])
             await query.get_response()
             response = query.first_choice()
-            print("response", repr(response))
+            #p("response", repr(response))
             # get thoughts and response if available
             thoughts_and_response = query.thoughts_and_response()
             thoughts = None
@@ -289,7 +287,7 @@ class LLMDiscussion:
             self.info.html("Ask %s anything" % repr(self.selectedLLM))
             self.scroll_to_bottom()
         except Exception as ex:
-            print("ask_llm exception", repr(ex))
+            #p("ask_llm exception", repr(ex))
             self.info.html(
                 "<b>Error while asking %s:</b> <em>%s</em>"
                 % (repr(self.selectedLLM), html.escape(str(ex)))
