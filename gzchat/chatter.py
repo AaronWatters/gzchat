@@ -130,12 +130,31 @@ class LLMQuery:
                 d = await resp.json()
                 self.json_response = d
                 return d
+            
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="LLM Discussion")
+    # optional model string like "deepseek-ai/DeepSeek-R1"
+    parser.add_argument("--model", type=str, help="LLM model to use")
+    # optional URL string for the LLM API endpoint
+    parser.add_argument("--url", type=str, help="LLM API endpoint URL")
+    myLLMs = LLMs.copy()
+    LLMname = None
+    args = parser.parse_args(argv)
+    print("argv", argv)
+    print("args", args)
+    # if model and url are provided, add them to the LLMs dict with the model name as the key
+    if args.model and args.url:
+        myLLMs[args.model] = dict(model=args.model, url=args.url)
+        LLMname = args.model
+        print(f"Added custom LLM: {args.model} with URL {args.url}")
+    discussion = LLMDiscussion(LLMs=myLLMs, LLMname=LLMname)
+    gz.serve(discussion.run())
 
 class LLMDiscussion:
 
-    def __init__(self, LLMs=LLMs, messages=None):
+    def __init__(self, LLMs=LLMs, messages=None, LLMname=None):
         self.LLMs = LLMs
-        self.selectedLLM = None
+        self.selectedLLM = LLMname
         self.messages = messages if messages is not None else init_messages()
         self.header = gz.Html("<h1>LLM Discussion</h1>")
         choices = ["(choose a model)"] + list(LLMs.keys())
@@ -294,6 +313,9 @@ class LLMDiscussion:
 
     async def run(self):
         await self.dashboard.link()
+        if self.selectedLLM is not None:
+            params = self.LLMs[self.selectedLLM]
+            self.chat(params)
 
 if __name__ == "__main__":
     gz.serve(LLMDiscussion().run())
