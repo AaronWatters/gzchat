@@ -4,17 +4,17 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "gzchat"
-version = "0.1.0"
+version = "0.1.1"
 description = "command line graphical LLM chat interface that opens in the browser"
 readme = "README.md"
 requires-python = ">=3.8"
 
 dependencies = [
-    "H5Gizmos @ git+https://github.com/AaronWatters/H5Gizmos.git",
+    "h5gizmos",
+    "markdown",
 ]
 
 [project.scripts]
-add_example = "gzchat.add_example:main"
 gzchat = "gzchat.chatter:main"
 
 [tool.pytest.ini_options]
