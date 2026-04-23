@@ -90,10 +90,11 @@ class LLMQuery:
         self.url = url
         self.json_response = None
 
-    def first_choice(self):
+    def first_choice(self, field="content"):
         if self.json_response is None:
             raise Exception("No response yet")
-        return self.json_response["choices"][0]["message"]["content"]
+        mapping = self.json_response["choices"][0]["message"]
+        return mapping.get(field, None)
     
     def thoughts_and_response(self):
         if self.json_response is None:
@@ -102,6 +103,9 @@ class LLMQuery:
         if not choice:
             return ("No response content", "No response content")
         if self.thoughts_splitter not in choice:
+            reasoning = self.first_choice(field="reasoning")
+            if reasoning:
+                return (html.escape(reasoning), choice)
             return ("No thoughts provided", choice)
         [thoughts, response] = choice.rsplit(self.thoughts_splitter, 1)
         # html escape the thoughts.
