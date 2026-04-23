@@ -18,7 +18,19 @@ LLMs = dict(
     nemotron = dict(
         url = "http://workergpu172:8000/v1/chat/completions",
         model = "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-FP8",
-    )
+    ),
+    gptOSS = dict(
+        url = "http://workergpu172:8001/v1/chat/completions",
+        model = "openai/gpt-oss-120b",
+    ),
+    QwenFP8 = dict(
+        url = "http://workergpu172:8002/v1/chat/completions",
+        model = "Qwen/Qwen3.5-122B-A10B-FP8",
+    ),
+    QwenA17B = dict(
+        url = "http://workergpu308:8002/v1/chat/completions",
+        model = "Qwen/Qwen3.5-397B-A17B",
+    ),
 )
 
 InjectCSS = """
@@ -87,8 +99,10 @@ class LLMQuery:
         if self.json_response is None:
             raise Exception("No response yet")
         choice = self.first_choice()
+        if not choice:
+            return ("No response content", "No response content")
         if self.thoughts_splitter not in choice:
-            return None
+            return ("No thoughts provided", choice)
         [thoughts, response] = choice.rsplit(self.thoughts_splitter, 1)
         # html escape the thoughts.
         thoughts = html.escape(thoughts)
@@ -254,6 +268,16 @@ class LLMDiscussion:
             params = self.LLMs[self.selectedLLM]
             query = LLMQuery(self.messages, params["model"], params["url"])
             await query.get_response()
+            raw_response_json = query.json_response
+            #p("raw_response_json", repr(raw_response_json))
+            # add the raw response as a textarea in an expandable details section for debugging
+            quoted_json = html.escape(json.dumps(raw_response_json, indent=2))
+            raw_response_div = gz.Html("""
+                <details><summary>Raw LLM Response</summary>
+                <textarea readonly rows=20 cols=80 style="width: 100%%;">%s</textarea>
+                </details>
+            """ % quoted_json)
+            self.interactions.append(raw_response_div)
             response = query.first_choice()
             #p("response", repr(response))
             # get thoughts and response if available
@@ -283,9 +307,9 @@ class LLMDiscussion:
             if thoughts_div is not None:
                 self.interactions.append(thoughts_div)
             self.interactions.append(llm_response)
-            self.dialog.attach_children(self.interactions)
+            #self.dialog.attach_children(self.interactions)
             self.info.html("Ask %s anything" % repr(self.selectedLLM))
-            self.scroll_to_bottom()
+            #self.scroll_to_bottom()
         except Exception as ex:
             #p("ask_llm exception", repr(ex))
             self.info.html(
@@ -295,8 +319,10 @@ class LLMDiscussion:
             # reraise the exception to show it in the console
             raise ex
         finally:
+            self.dialog.attach_children(self.interactions)
             self.enable_buttons(True)
             self.button.text("Ask")
+            self.scroll_to_bottom()
 
     def scroll_to_bottom(self):
         window = self.dashboard.window
