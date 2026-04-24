@@ -1,6 +1,8 @@
 # gzchat
 A command line graphical LLM chat interface that opens in the browser.
 
+The core of this module was derived from code by Geraud Krawezik.
+
 <img src="shot.png" width="300"/>
 
 # Installation
