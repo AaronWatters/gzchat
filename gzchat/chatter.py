@@ -235,6 +235,10 @@ class LLMDiscussion:
         with open(filename, "w") as f:
             json.dump(self.messages, f, indent=2)
         self.info.html(f"<b>History saved to {filename}</b>")
+        self.save_button.text("Save")
+        #self.filename_input.set_value("")
+        self.filename_input.css({"display": "none"})
+        self.filename_visible = False
         self.scroll_to_bottom()
 
     def enable_buttons(self, enabled=True):
